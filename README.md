@@ -9,3 +9,10 @@ This repository is going to be used for the Hack2Innovate hackathon.
 **Team Leader:** Varun Kamath
 
 **Team Members:** Ishita Sinha, Kshitij Dhar
+
+**Steps**
+
+1. The final script is the runner.py in the GetOldTweets directory, hence download the two zip files and unzip them.
+2. The values are hard coded for now, in the future we will switch it to raw input.
+
+

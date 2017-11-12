@@ -12,36 +12,47 @@ data = response.json()
 if UnitTime == 1 :
     i = 0
     a = []
+    b = []
     l = len(data["dataset"]["data"]) 
     while i < l-1 :
-        y_temp = data["dataset"]["data"][i][5]
+        y_temp1 = data["dataset"]["data"][i][5]
+        y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i][1]
         x_temp = data["dataset"]["data"][i][0]
-	a = np.append(a, [x_temp, y_temp])
-	i = i + 1
-    #post a
+	  a = np.append(a, [x_temp, y_temp1])
+	  b = np.append(a, [x_temp, y_temp2])
+	  i = i + 1
+    #post a b
+    
 
 elif UnitTime == 2 :
     i = 0
     a = []
+    b = []
     l = len(data["dataset"]["data"])
-    while i < l-1 :
-        y_temp = data["dataset"]["data"][i][5]
+    while i < l-5 :
+        y_temp1 = data["dataset"]["data"][i][5]
+        y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i+4][1]
         x_temp = data["dataset"]["data"][i][0]
-	a = np.append(a, [x_temp, y_temp])
-	i = i + 5
-    #post a
+	      a = np.append(a, [x_temp, y_temp1])
+        b = np.append(a, [x_temp, y_temp2])
+	      i = i + 5
+    #post a b
+
 
 elif UnitTime == 3 :
     i = 0
     a = []
+    b = []
     l = len(data["dataset"]["data"])
-    while i < l-1 :
+    while i < l-31 :
         x_temp = data["dataset"]["data"][i][0]
         if x_temp[8] == 0 and x_temp[9] == 1 :
-            y_temp = data["dataset"]["data"][i][5]
-            a = np.append(a, [x_temp, y_temp])
-	i = i + 1
-    #post a
+            y_temp1 = data["dataset"]["data"][i][5]
+            y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i+30][1]
+            a = np.append(a, [x_temp, y_temp1])
+            b = np.append(a, [x_temp, y_temp2])
+	      i = i + 1
+    #post a b
 
 else :
     #post error code

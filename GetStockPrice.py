@@ -18,10 +18,11 @@ if UnitTime == 1 :
         y_temp1 = data["dataset"]["data"][i][5]
         y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i][1]
         x_temp = data["dataset"]["data"][i][0]
-	a = np.append(a, [x_temp, y_temp1])
-	b = np.append(a, [x_temp, y_temp2])
-	i = i + 1
+	  a = np.append(a, [x_temp, y_temp1])
+	  b = np.append(a, [x_temp, y_temp2])
+	  i = i + 1
     #post a b
+    
 
 elif UnitTime == 2 :
     i = 0
@@ -32,10 +33,11 @@ elif UnitTime == 2 :
         y_temp1 = data["dataset"]["data"][i][5]
         y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i+4][1]
         x_temp = data["dataset"]["data"][i][0]
-	a = np.append(a, [x_temp, y_temp1])
+	      a = np.append(a, [x_temp, y_temp1])
         b = np.append(a, [x_temp, y_temp2])
-	i = i + 5
+	      i = i + 5
     #post a b
+
 
 elif UnitTime == 3 :
     i = 0
@@ -49,7 +51,7 @@ elif UnitTime == 3 :
             y_temp2 = data["dataset"]["data"][i][5] - data["dataset"]["data"][i+30][1]
             a = np.append(a, [x_temp, y_temp1])
             b = np.append(a, [x_temp, y_temp2])
-	i = i + 1
+	      i = i + 1
     #post a b
 
 else :

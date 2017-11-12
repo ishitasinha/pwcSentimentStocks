@@ -1,120 +1,128 @@
+# -*- coding: utf-8 -*-
+import os
 import re
-import tweepy
-from tweepy import OAuthHandler
+import sys,getopt,datetime,codecs
+if sys.version_info[0] < 3:
+    import got
+else:
+    import got3 as got
 from textblob import TextBlob
 
-class TwitterClient(object):
-	'''
-	Generic Twitter Class for sentiment analysis.
-	'''
-	def __init__(self):
-		'''
-		Class constructor or initialization method.
-		'''
-		# keys and tokens from the Twitter Dev Console
-		consumer_key = 'IPpQvmxLjJeb37vjB5o9hvcTC'
-		consumer_secret = 'dDG6JlULADSTNULbhG67aKwUQo0L6ecArZ30WhyItpCbsAyGOz'
-		access_token = '929292315406999552-lb6tR2OONSRhJ6ZTQOvExS49rhKgwP9'
-		access_token_secret = '9cbItuzXRrWVpvbIdpXxay8guxGmGcmgYnj9QvwGP3i50'
- 
 
-		# attempt authentication
-		try:
-			# create OAuthHandler object
-			self.auth = OAuthHandler(consumer_key, consumer_secret)
-			# set access token and secret
-			self.auth.set_access_token(access_token, access_token_secret)
-			# create tweepy API object to fetch tweets
-			self.api = tweepy.API(self.auth)
-		except:
-			print("Error: Authentication Failed")
 
-	def clean_tweet(self, tweet):
-		'''
-		Utility function to clean tweet text by removing links, special characters
-		using simple regex statements.
-		'''
-		return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])(\w+:\/\/\S+)", " ", tweet).split())
+psTweets = 0
+ngTweets = 0
+ntTweets = 0
+numTweets = 0
 
-	def get_tweet_sentiment(self, tweet):
-		'''
-		Utility function to classify sentiment of passed tweet
-		using textblob's sentiment method
-		'''
-		# create TextBlob object of passed tweet text
-		analysis = TextBlob(self.clean_tweet(tweet))
-		# set sentiment
-		if analysis.sentiment.polarity > 0:
-			return 'positive'
-		elif analysis.sentiment.polarity == 0:
-			return 'neutral'
-		else:
-			return 'negative'
+def main(argv):
 
-	def get_tweets(self, query, count = 10):
-		'''
-		Main function to fetch tweets and parse them.
-		'''
-		# empty list to store parsed tweets
-		tweets = []
+	os.remove('/Users/ishitasinha/pwcSentimentStocks/GetOldTweets-python/output_got.csv')
 
-		try:
-			# call twitter api to fetch tweets
-			fetched_tweets = self.api.search(q = query, count = count)
+	if len(argv) == 0:
+		print('You must pass some parameters. Use \"-h\" to help.')
+		return
 
-			# parsing tweets one by one
-			for tweet in fetched_tweets:
-				# empty dictionary to store required params of a tweet
-				parsed_tweet = {}
+	if len(argv) == 1 and argv[0] == '-h':
+		f = open('exporter_help_text.txt', 'r')
+		print f.read()
+		f.close()
 
-				# saving text of tweet
-				parsed_tweet['text'] = tweet.text
-				# saving sentiment of tweet
-				parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.text)
+		return
 
-				# appending parsed tweet to tweets list
-				if tweet.retweet_count > 0:
-					# if tweet has retweets, ensure that it is appended only once
-					if parsed_tweet not in tweets:
-						tweets.append(parsed_tweet)
+	try:
+		opts, args = getopt.getopt(argv, "", ("username=", "near=", "within=", "since=", "until=", "querysearch=", "toptweets", "maxtweets=", "output="))
+
+		tweetCriteria = got.manager.TweetCriteria()
+		outputFileName = "output_got.csv"
+
+		for opt,arg in opts:
+			if opt == '--username':
+				tweetCriteria.username = arg
+
+			elif opt == '--since':
+				tweetCriteria.since = arg
+
+			elif opt == '--until':
+				tweetCriteria.until = arg
+
+			elif opt == '--querysearch':
+				tweetCriteria.querySearch = arg
+
+			elif opt == '--toptweets':
+				tweetCriteria.topTweets = True
+
+			#elif opt == '--maxtweets':
+			#	tweetCriteria.maxTweets = int(arg)
+			
+			elif opt == '--near':
+				tweetCriteria.near = '"' + arg + '"'
+			
+			elif opt == '--within':
+				tweetCriteria.within = '"' + arg + '"'
+
+			elif opt == '--within':
+				tweetCriteria.within = '"' + arg + '"'
+
+			elif opt == '--output':
+				outputFileName = arg
+				
+		outputFile = codecs.open(outputFileName, "a", "utf-8")
+
+		outputFile.write('username;date;retweets;favorites;text;geo;mentions;hashtags;id;permalink')
+
+		print('Searching...\n')
+
+		def receiveBuffer(tweets):
+			global numTweets
+
+			for t in tweets:
+				analysis = TextBlob(' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])(\w+:\/\/\S+)", " ", t.text).split()))
+				# set sentiment
+				if analysis.sentiment.polarity > 0:
+					global psTweets
+					psTweets = psTweets + 1
+				elif analysis.sentiment.polarity == 0:
+					global ntTweets
+					ntTweets = ntTweets + 1
 				else:
-					tweets.append(parsed_tweet)
+					global ngTweets
+					ngTweets = ngTweets + 1
+				outputFile.write(('\n%d\n%s\n%s\n' % (numTweets,t.date.strftime("%Y-%m-%d %H:%M"), t.text)))
+				numTweets = numTweets + 1;
 
-			# return parsed tweets
-			return tweets
+			outputFile.flush();
+			print('More %d saved on file...\n' % len(tweets))
 
-		except tweepy.TweepError as e:
-			# print error (if any)
-			print("Error : " + str(e))
+		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer)
 
-def main():
-	# creating object of TwitterClient Class
-	api = TwitterClient()
-	# calling function to get tweets
-	tweets = api.get_tweets(query = 'Instagram', count = 200)
+	except arg:
+		print('Arguments parser error, try -h' + arg)
+	finally:
+		outputFile.close()
+		print('Done. Output file generated "%s".' % outputFileName)
 
-	# picking positive tweets from tweets
-	ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive']
-	# percentage of positive tweets
-	print("Positive tweets percentage: {} %".format(100*len(ptweets)/float(len(tweets))))
-	# picking negative tweets from tweets
-	ntweets = [tweet for tweet in tweets if tweet['sentiment'] == 'negative']
-	# percentage of negative tweets
-	print("Negative tweets percentage: {} %".format(100*len(ntweets)/float(len(tweets))))
-	# percentage of neutral tweets
-	neutraltweets = (100*(len(tweets) - len(ntweets) - len(ptweets))/float(len(tweets)))
-	print("Neutral tweets percentage: {} %".format(neutraltweets))
+	storageFile = open('storeData.json','wa')
 
-	# printing first 5 positive tweets
-	print("\n\nPositive tweets:")
-	for tweet in ptweets[:10]:
-		print(tweet['text'])
+	global psTweets
+	global ngTweets
+	global ntTweets
+	psTweets = psTweets/float(numTweets)
+	ngTweets = ngTweets/float(numTweets)
+	ntTweets = ntTweets/float(numTweets)
+	
+	print('Number of total tweets: {}'.format(numTweets))
+	print('Number of positive tweets: {}'.format(psTweets))
+	print('Number of negative tweets: {}'.format(ngTweets))
+	print('Number of neutral tweets: {}'.format(ntTweets))
 
-	# printing first 5 negative tweets
-	print("\n\nNegative tweets:")
-	for tweet in ntweets[:10]:
-		print(tweet['text'])
+	storageFile.write('Number of total tweets: {}\n'.format(numTweets))
+	storageFile.write('Number of positive tweets: {}\n'.format(psTweets))
+	storageFile.write('Number of negative tweets: {}\n'.format(ngTweets))
+	storageFile.write('Number of neutral tweets: {}\n'.format(ntTweets))
+	storageFile.close()
+		
+if __name__ == '__main__':
+	main(sys.argv[1:])
 
-if __name__ == "__main__":
-	# calling main function
-	main()
+
